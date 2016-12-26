@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<script src="js/echarts.js"></script>
+		<script src="echartsMap/china.js"></script>
+		<script src="css/jquery-1.9.1.min.js"></script>
+		<!--<script src="css/bootstrap.js"></script>-->
+	</head>
+
+	<body>
+		<div class="container" style="padding:0px;">
+			<div id="main" style="height:800px;position: relative;" />
+		</div>
+
+		<script type="text/javascript">
+			/*为图表生成按钮*/
+			function beIcn(charts, functions) {
+				// Draw icon
+				var zr = charts.getZr();
+				/*左边中间的按钮*/
+				var icon0 = new echarts.graphic.Circle({
+					shape: {
+						r: 30
+					},
+					style: {
+						text: '返回',
+						fill: '#e0e0e0',
+						fontSize: 15,
+						z:5
+					},
+					position: [50, zr.getHeight() * 1 / 2]
+				});
+				/*右边中间的按钮*/
+				//				var icon1 = new echarts.graphic.Circle({
+				//					shape: {
+				//						r: 20
+				//					},
+				//					style: {
+				//						text: '>',
+				//						fill: '#eee'
+				//					},
+				//					position: [zr.getWidth() - 50, zr.getHeight() / 2]
+				//				});
+
+				var group = new echarts.graphic.Group();
+				group.add(icon0);
+				zr.add(group);
+				icon0.on('click', functions);
+			}
+		</script>
+		<script type="text/javascript">
+			/* 全局变量设置 */
+			var option = {};
+			var chart = echarts.init(document.getElementById('main'));
+			var countryViewOption; /*首选项 */
+			var cityViewOption;
+			var province;
+			var city;
+			var provinces = ['shanghai', 'hebei', 'shanxi', 'neimenggu', 'liaoning', 'jilin', 'heilongjiang', 'jiangsu', 'zhejiang', 'anhui', 'fujian', 'jiangxi', 'shandong', 'henan', 'hubei', 'hunan', 'guangdong', 'guangxi', 'hainan', 'sichuan', 'guizhou', 'yunnan', 'xizang', 'shanxi1', 'gansu', 'qinghai', 'ningxia', 'xinjiang', 'beijing', 'tianjin', 'chongqing', 'xianggang', 'aomen'];
+			var provincesText = ['上海', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '江苏', '浙江', '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '广西', '海南', '四川', '贵州', '云南', '西藏', '陕西', '甘肃', '青海', '宁夏', '新疆', '北京', '天津', '重庆', '香港', '澳门'];
+			/*省份钻取处理函数*/
+			function showProvince(data) {
+				var nameNum = jQuery.inArray(data, provincesText); /* 判断数据是否包含数据返回index */
+				var name = provinces[nameNum];
+				$.get('echartsMap/provinceCity/' + name + '.json', function(geoJson) { /* 地图Json文件获取 */
+					console.log(name)
+					var dataJson = geoJson.data[0];
+					var gpsData = geoJson.gps;
+					var flasData = geoJson.gps_flashing;
+					var sexData = geoJson.sex;
+					var ageData = geoJson.age;
+					var legendData = geoJson.legend;
+					var proData = [];
+					var flas = [];
+					var res = [];
+					var _series = [];
+					var leged = [];
+					var legedName = [];
+					for(var y in legendData) {
+						leged.push(legendData[y])
+					}
+					for(var y in leged[0]) {
+						legedName.push(y)
+					}
+					for(var z in gpsData) {
+						proData.push(gpsData[z])
+					}
+					for(var xz in flasData) {
+						flas.push(flasData[xz])
+					}
+					
+					
+//					localStorage.setItem("not_scatter",JSON.stringify(proData))     //设置非散点 not_scatter
+//					var not_scatter=JSON.parse(localStorage.getItem("data"))		//获取非散点的属性
+
+//					localStorage.setItem("scatter",JSON.stringify(flas))     		//设置散点 为scatter
+//					var scatter=JSON.parse(localStorage.getItem("scatter"))		//获取散点的属性
+					
+//					var socket= new WebSocket(""); // 创建一个socket 实例
+//					
+//					socket.onopen=function(e){		//  开启 socket
+//						socket.send("初始消息");		// 发送一条初始消息
+//					}
+//						socket.onmessage=function(e){	//监听消息
+//						 console.log("我收到消息了");	
+//						 	if(e.data.type==old){   			// 判断其类型 old为就有存在的  new在新创建的
+//						 		not_scatter.removeItem(e.data);	//如果其存在 删除旧有的
+//						 		scatter.push(e.data)               //在散点中添加这个属性
+//						 		chart.setOption(				//设置地图属性  添加散点
+//						 			option={
+//						 				series:[]				//设置 属性
+//						 			}
+//						 		)
+//						 	}else{								 // 否则就为新添加的散点 不用删除旧有的
+//						 		flas.push(e.data);				 //散点字段中添加这个 属性
+//						 		chart.setOption(
+//						 			option={
+//						 				series:[]				 //设置属性	
+//							 		}
+//						 		)
+//						 	}
+//						}
+//						socket.onerror=function(e){				//监听出错
+//							console.log("出错了："+e.data)
+//						}
+//						socket.onclose=function(e){				//socket 的 关闭
+//							console.log("关闭了")
+//						}
+
+
+					for(var i in dataJson) {
+						res.push(i)
+						_series.push({
+							name: i,
+							type: 'bar',
+							data: dataJson[i],
+							itemStyle:{
+								normal:{
+		                    		color:function(params){
+			 								var colorsData = ["#4C72B0", "#55A868", "#C44E52", "#8172B2", "#CCB974", "#64B5CD","#4C72B0", "#55A868", "#C44E52", "#8172B2", "#CCB974", "#64B5CD","#4C72B0", "#55A868", "#C44E52", "#8172B2", "#CCB974", "#64B5CD","#4C72B0", "#55A868", "#C44E52", "#8172B2", "#CCB974", "#64B5CD","#4C72B0", "#55A868", "#C44E52", "#8172B2", "#CCB974", "#64B5CD","#4C72B0", "#55A868", "#C44E52", "#8172B2"];
+		                    			 	return colorsData[params.dataIndex]
+		                    		}
+								}
+							}
+						})
+					}
+					 dataCity = geoJson.citys;
+					console.log(dataCity);
+
+					_series.push({
+						type: 'effectScatter',
+						coordinateSystem: 'geo',
+						data: proData,
+						symbolSize: [20, 20],
+						showEffectOn: 'render',
+						rippleEffect: {
+							brushType: 'stroke'
+						},
+						hoverAnimation: true,
+						label: {
+							normal: {
+								formatter: '{b}',
+								position: 'right',
+								show: false
+							},
+							emphasis: {
+								show: true
+							}
+						},
+						itemStyle: {
+							normal: {
+								color: '#ddb926',
+								shadowBlur: 5,
+								shadowColor: '#333'
+							}
+						}
+					}, {
+						type: 'scatter',
+						coordinateSystem: 'geo',
+						data: flas,
+						symbolSize: [12, 12],
+						label: {
+							normal: {
+								formatter: '{b}',
+								position: 'right',
+								show: false
+							},
+							emphasis: {
+								show: true
+							}
+						},
+						itemStyle: {
+							normal: {
+								color: '#ddb926'
+							}
+						}
+					}, {
+						id: "pie",
+						type: "pie",
+						radius: ["50", "70"],
+						center: ["88%", "40%"],
+						data: sexData,
+						labelLine: {
+							normal: {
+								show: false
+							}
+						},
+					}, {
+						id: "pie2",
+						type: "pie",
+						radius: ["50", "70"],
+						center: ["88%", "70%"],
+						data: ageData,
+						labelLine: {
+							normal: {
+								show: false
+							}
+						},
+					})
+					echarts.registerMap(name, geoJson); /* 地图注册 */
+					chart.setOption(
+						option = {
+							tooltip: {
+//								trigger: 'item',
+//								formatter: '{b}'
+							},
+							legend: {
+								data: res,
+								selected: {
+									'X病种': true,
+									'XX病种': false,
+									'XXX病种': false,
+									'XXXX病种': false
+								}
+							},
+							geo: {
+								map: name,
+								animation: true,
+								animationDurationUpdate: 500,
+								//: 'quinticInOut',
+								label: {
+									normal: {
+										show: true,
+										textStyle: {
+											color: '#fff'
+										}
+									},
+									emphasis: {
+										show: true,
+									}
+								},
+								itemStyle: {
+									normal: {
+										areaColor: '#323c48',
+										borderColor: '#fff'
+									},
+									emphasis: {
+										areaColor: 'yellow'
+									}
+								}
+							},
+							legend: {
+								data: legedName,
+								top: 50,
+								itemGap: 20,
+								right: 50,
+								textStyle: {
+									color: 'yellow'
+								},
+								selected: leged[0]
+							},
+							series: _series,
+							yAxis: {
+								name: '单位:',
+								type: 'category',
+								axisLine: {
+									show: false,
+									lineStyle: {
+										color: '#ddd'
+									}
+								},
+								axisTick: {
+									show: false,
+									lineStyle: {
+										color: '#ddd'
+									}
+								},
+								axisLabel: {
+									interval: 0,
+									textStyle: {
+										color: '#ddd'
+									}
+								},
+								axisTick: {
+									show: false,
+									alignWithLabel: true
+								},
+								boundaryGap: 55,
+								nameGap: 25,
+								nameLocation: 'end',
+								data: dataCity
+							},
+						});
+					cityViewOption = chart.getOption()
+					window.onresize = chart.resize;
+				});
+			}
+                        
+			//  页面初始化调用函数    初始化加载 
+			//  省级 返回全国调用函数
+
+			function initial() {
+					$.ajax({
+	//					async:false,
+						url:"http://yy.hiscaler.net/index.php/api/patients",
+						dataType:"jsonp",
+	//					jsonp: 'jsoncallback',
+						type:'GET',
+	//					beforeSend:function(ss){
+	//						
+	//					},
+						success:function(data){
+							console.log(data.provinces)
+						}
+					})
+				}
+//			function initial(){
+//				$.get('echartsMap/test/test.json', function(geoJson) {
+//					var initData = geoJson.data[0]; //  
+//					var initSex = geoJson.sex;
+//					var initAge = geoJson.age;
+////					var initLegend = geoJson.legend[0];
+//					console.log(initData)
+//					var _initSeries = [];
+//					var xzz = [];
+//					for(var p in initData) {
+//						xzz.push(p)
+//						_initSeries.push({
+//							name: p,
+//							type: 'bar',
+//							data: initData[p],
+//							itemStyle:{
+//								normal:{
+//		                    		color:function(params){
+//			 								var colorsData = ["#4C72B0", "#55A868", "#C44E52", "#8172B2", "#CCB974", "#64B5CD","#4C72B0", "#55A868", "#C44E52", "#8172B2", "#CCB974", "#64B5CD","#4C72B0", "#55A868", "#C44E52", "#8172B2", "#CCB974", "#64B5CD","#4C72B0", "#55A868", "#C44E52", "#8172B2", "#CCB974", "#64B5CD","#4C72B0", "#55A868", "#C44E52", "#8172B2", "#CCB974", "#64B5CD","#4C72B0", "#55A868", "#C44E52", "#8172B2"];
+//		                    			 	return colorsData[params.dataIndex]
+//		                    		}
+//								}
+//							}
+//						})
+//					};
+//					
+//					_initSeries.push({
+//						id: "pie",
+//						type: "pie",
+//						radius: ["50", "70"],
+//						center: ["88%", "40%"],
+//						data: initSex,
+//						labelLine: {
+//							normal: {
+//								show: false
+//							}
+//						}}, {
+//							id: "pie2",
+//							type: "pie",
+//							radius: ["50", "70"],
+//							center: ["88%", "70%"],
+//							data: initAge,
+//							labelLine: {
+//								normal: {
+//									show: false
+//								}
+//							},
+//						})
+//					console.log(_initSeries)
+//					chart.setOption(
+//						option = {
+//							legend: {
+//								data: xzz,
+//								selectedMode:'single'
+////								selected: initLegend
+//							},
+//							series: _initSeries,
+//						}
+//					)
+//				})
+//			};
+
+			/*市级钻取处理函数*/
+			function showCity(data) {
+				$.get('echartsMap/cityTown/' + data + '.json', function(geoJson) { /* 地图Json文件获取 */
+					console.log(geoJson.map_ID)
+					echarts.registerMap(data, geoJson); /* 地图注册 */
+
+					chart.setOption(
+						option = {
+							tooltip: {
+								trigger: 'item',
+								formatter: '{b}'
+							},
+							geo: {
+								map: data,
+								silent: false,
+								/*无鼠标等事件*/ 
+								animation: true,
+								animationDurationUpdate: 500
+								//animationEasingUpdate: 'quinticInOut'
+
+							},
+							series: [{
+								name: 'XX医院',
+								type: 'effectScatter',
+								coordinateSystem: 'geo',
+								data: [{
+									name: 'YY',
+									value: [113, 28.21, 5]
+								}],
+								symbolSize: [10, 10],
+								showEffectOn: 'render',
+								rippleEffect: {
+									brushType: 'stroke'
+								},
+								hoverAnimation: true,
+								label: {
+									normal: {
+										formatter: '{a}',
+										position: 'right',
+										show: false
+									},
+									emphasis: {
+										show: true
+									}
+								},
+								itemStyle: {
+									normal: {
+										color: '#ddb926',
+										shadowBlur: 5,
+										shadowColor: '#333'
+									}
+								}
+							}]
+						});
+					window.onresize = chart.resize;
+				});
+			}
+
+			/*首选项*/
+			option = {
+				backgroundColor: "#404a59",
+				title: {
+					text: "健康云平台",
+					left: 'center',
+					top: 15,
+					textStyle: {
+						color: "#fff",
+						//						fontStyle:'oblique',// 设置标题 倾斜
+						fontWeight: "bold", //加粗否
+						fontFamilu: '微软雅黑',
+						fontSize: 24
+					},
+				},
+				grid: {
+					left: 60,
+					top: 50,
+					bottom: 40,
+					width: '15%'
+				},
+				legend: {
+					data: [],
+					top: 50,
+					itemGap: 20,
+					right: 50,
+					textStyle: {
+						color: 'yellow'
+					},
+				},
+				xAxis: {
+					position: 'top',
+					boundaryGap: false,
+					nameGap: 15,
+					left: 20,
+					splitLine: {
+						show: false
+					},
+					axisLine: {
+						show: false
+					},
+					axisTick: {
+						show: false
+					},
+					axisLabel: {
+						show: false,
+						textStyle: {
+							color: "#aaa"
+						}
+					},
+					axisLabel: {
+						margin: 7,
+						textStyle: {
+							color: '#aaa'
+						}
+					},
+				},
+				yAxis: {
+					name: '单位:',
+					type: 'category',
+					axisLine: {
+						show: false,
+						lineStyle: {
+							color: '#ddd'
+						}
+					},
+					axisTick: {
+						show: false,
+						lineStyle: {
+							color: '#ddd'
+						}
+					},
+					axisLabel: {
+						interval: 0,
+						textStyle: {
+							color: '#ddd'
+						}
+					},
+					axisTick: {
+						show: false,
+						alignWithLabel: true
+					},
+					boundaryGap: 55,
+					nameGap: 25,
+					nameLocation: 'end',
+					data: ['北京市', '天津市', '上海市', '重庆市', '河北', '山西', '辽宁', '吉林', '黑龙江', '江苏', '浙江', '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '海南', '四川', '贵州', '云南', '陕西', '甘肃', '青海', '台湾', '内蒙古', '广西', '西藏', '宁夏', '新疆', '香港', '澳门']
+				},
+				//				
+				tooltip: {
+					//trigger: 'item',
+					//formatter: '{b}'
+				},
+				geo: /* 地图基础坐标系 */ {
+					map: 'china',
+					//					roam:'move', 
+					/* 鼠标缩放和平移漫游 */
+					//					center:[113,28.21,5],  // 设置中心点用此方法偏移
+					zomm: 5,
+					label: {
+						normal: {
+							position: 'bottom',
+							show: false,
+						},
+						emphasis: {
+							textStyle: {
+								fontSize: 16,
+								color: 'red',
+								fontWeight: 'bold'
+							}
+						}
+					},
+					itemStyle: {
+						normal: {
+							areaColor: '#323c48',
+							borderColor: '#f0f0f0'
+						},
+						emphasis: {
+							areaColor: 'yellow'
+						}
+					},
+					regions: [{
+						name: '湖南',
+						selected: true
+					}]
+				},
+				series: []
+			};
+
+			setTimeout(initial, 0) //初始化调用test.json数据 
+			window.onresize = chart.resize; /* 根据屏幕调整宽度 */
+			chart.setOption(option); /*设置选项*/
+			countryViewOption = chart.getOption(); /*取得基础视图省级内容全局变量 */
+			bindClick();
+
+			function bindClick() {
+				/* 全局鼠标事件绑定 */
+				chart.on('click', function(params) {
+					var dataName = params.name; /*区域名称*/
+					if((jQuery.inArray(dataName, provincesText)) != -1) { /*省级点击触发*/
+						showProvince(dataName); /* 展示省级内容 */
+						/*var dom = chart.getDom();*/
+						province = dataName; /*全局省份名称变量*/
+						beIcn(chart, function(params) { /*添加返回省级视图按钮*/
+							exitProvice();
+							initial();
+						});
+					} else {
+						try {
+							console.log(params.title)
+							if(dataName.indexOf('县') > -1) {
+								return false
+							} else if(dataName.indexOf('区') > -1) {
+								return false
+							}
+						} catch(e) {
+							alert("try catch 出错")
+						}
+						$.ajax({ /*判断JSON文件是否存在*/
+							url: 'echartsMap/cityTown/' + dataName + '.json',
+							async: false,
+							error: function() {
+								/*JSON文件不存在触发*/
+								// 不需要 添加返回按钮   添加会返回错误 需点击两次返回才能 返回上一级
+								//								beIcn(chart, function(params) { /*添加返回省级视图按钮*/
+								//									exitBView(dataName);
+								//								});
+							},
+							success: function() {
+								/*JSON文件存在触发*/
+								city = dataName;
+								showCity(city); /* 展示市级内容 */
+								beIcn(chart, function(params) {
+									chart.setOption(cityViewOption); /*添加返回市级视图按钮*/
+									beIcn(chart, function(params) {
+										initial();
+										exitProvice();
+									});
+								});
+							}
+						});
+
+					}
+
+				});
+
+			}
+
+			function exitProvice() {
+				chart.dispose(); /*返回省级视图时销毁实例时清除返回按钮*/
+				chart = echarts.init(document.getElementById('main'));
+				chart.setOption(countryViewOption);
+				window.onresize = chart.resize;
+				bindClick();
+			}
+
+			function exitBView() {
+				chart.dispose(); /*返回省级视图时销毁实例时清除返回按钮*/
+				chart = echarts.init(document.getElementById('main'));
+				showCity(city);
+				beIcn(chart, function(params) {
+					chart.setOption(cityViewOption); /*添加返回市级视图按钮*/
+					beIcn(chart, function(params) {
+						exitProvice();
+					});
+				})
+				window.onresize = chart.resize;
+				bindClick();
+			}
+		</script>
+
+	</body>
+
+</html>
